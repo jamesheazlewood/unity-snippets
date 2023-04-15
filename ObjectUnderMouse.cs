@@ -17,7 +17,7 @@ public class ObjectUnderMouse : EditorWindow {
 	// if useDistance is false, the window will use the Z position of the UI element in world space.
 	// This isn't working 100% as the distance is from the bottom left of the UI element
 	// But it might also not be ideal to use the Z position, so use whichever one works best for you.
-	private readonly bool useDistance = false;
+	private readonly bool useDistance = true;
 
 	// If useLog is true, the window will log some debug info into itself. Useful for seeing which
 	// elements are active under the mouse and is useful for debugging.
@@ -25,6 +25,14 @@ public class ObjectUnderMouse : EditorWindow {
 
 	// If true the window will log to the console. Turn on "monospace" mode for a more readable output.
 	private readonly bool logToConsole = false;
+
+	//
+	private readonly bool useOnlyDrawScore = true;
+
+	// If the element has this tag, the picking will ignore it. 
+	// Use this tag for full screen canvas elements that you don't want to set not active
+	// Also good for things that are in a mask
+	private readonly string ignoreTag = "EditorNotPickable";
 
 	// stores logs until they can br printed
 	private List<string> logLines;
@@ -153,6 +161,10 @@ public class ObjectUnderMouse : EditorWindow {
 					continue;
 				}
 
+				if(element.CompareTag(ignoreTag)) {
+					continue;
+				}
+
 				if(useDistance) {
 					Vector3 heading = element.position - sceneCamera.transform.position;
 					float distance = Vector3.Dot(heading, sceneCamera.transform.forward);
@@ -215,17 +227,22 @@ public class ObjectUnderMouse : EditorWindow {
 			// Make list of only the closest
 			List<RectTransform> closestElementsUnderMouse = new List<RectTransform>();
 			foreach(RectTransform rectTransform in elementsUnderMouse) {
-				// Add all elements to a list that are the same distance,
-				// that distance being the closest one to the camera from the previous loop
-				if(useDistance) {
-					Vector3 heading = rectTransform.position - sceneCamera.transform.position;
-					float distance = Vector3.Dot(heading, sceneCamera.transform.forward);
-					if(distance == closestDistance) {
-						closestElementsUnderMouse.Add(rectTransform);
-					}
+				if(useOnlyDrawScore) {
+					// Just add all of them to the list
+					closestElementsUnderMouse.Add(rectTransform);
 				} else {
-					if(rectTransform.position.z == closestDistance) {
-						closestElementsUnderMouse.Add(rectTransform);
+					// Add all elements to a list that are the same distance,
+					// that distance being the closest one to the camera from the previous loop
+					if(useDistance) {
+						Vector3 heading = rectTransform.position - sceneCamera.transform.position;
+						float distance = Vector3.Dot(heading, sceneCamera.transform.forward);
+						if(distance == closestDistance) {
+							closestElementsUnderMouse.Add(rectTransform);
+						}
+					} else {
+						if(rectTransform.position.z == closestDistance) {
+							closestElementsUnderMouse.Add(rectTransform);
+						}
 					}
 				}
 			}
@@ -245,7 +262,7 @@ public class ObjectUnderMouse : EditorWindow {
 			RectTransform highestScoreRectTransform = null;
 
 			// Loop through elements and calculate the highest hierarchy score
-			foreach(RectTransform rectTransform in closestElementsUnderMouse) {
+			foreach(RectTransform rectTransform in elementsUnderMouse) {
 				double score = GetRenderPriority(rectTransform.transform);
 
 				if(score > highestScore) {
