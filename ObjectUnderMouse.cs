@@ -262,7 +262,7 @@ public class ObjectUnderMouse : EditorWindow {
 			RectTransform highestScoreRectTransform = null;
 
 			// Loop through elements and calculate the highest hierarchy score
-			foreach(RectTransform rectTransform in elementsUnderMouse) {
+			foreach(RectTransform rectTransform in closestElementsUnderMouse) {
 				double score = GetRenderPriority(rectTransform.transform);
 
 				if(score > highestScore) {
